@@ -1,0 +1,58 @@
+name: Epic Games Weekly Free Games Notification
+
+on:
+  # 每周四UTC时间00:00运行（Epic通常在周四更新免费游戏）
+  schedule:
+    - cron: '0 0 * * 4'
+  # 允许手动触发
+  workflow_dispatch:
+
+jobs:
+  check-free-games:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Fetch Epic Games free games
+        id: fetch
+        run: |
+          python3 epic_games.py > games.json
+          echo "has_games=$(jq -e '.current_free_games | length > 0 or .upcoming_free_games | length > 0' games.json)" >> $GITHUB_OUTPUT
+        continue-on-error: true
+
+      - name: Format message for Feishu
+        if: steps.fetch.outputs.has_games == 'true'
+        id: format
+        run: |
+          python3 send_feishu.py < games.json > message.txt
+
+      - name: Send to Feishu
+        if: steps.fetch.outputs.has_games == 'true' && secrets.FEISHU_WEBHOOK_URL != ''
+        env:
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+        run: |
+          MESSAGE=$(cat message.txt)
+          curl -X POST "$FEISHU_WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "{\"msg_type\":\"text\",\"content\":{\"text\":\"$MESSAGE\"}}"
+
+      - name: Display message (manual run)
+        if: steps.fetch.outputs.has_games == 'true' && secrets.FEISHU_WEBHOOK_URL == ''
+        run: |
+          echo "========================================="
+          echo "FEISHU_WEBHOOK_URL not configured"
+          echo "Add it as a repository secret to enable notifications"
+          echo "========================================="
+          cat message.txt
+
+      - name: No games found
+        if: steps.fetch.outputs.has_games != 'true'
+        run: |
+          echo "No free games found this week"
