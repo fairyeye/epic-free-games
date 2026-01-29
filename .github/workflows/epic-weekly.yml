@@ -34,23 +34,23 @@ jobs:
           python3 send_feishu.py < games.json > message.txt
 
       - name: Send to Feishu
-        if: steps.fetch.outputs.has_games == 'true' && secrets.FEISHU_WEBHOOK_URL != ''
+        if: steps.fetch.outputs.has_games == 'true'
         env:
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
         run: |
           MESSAGE=$(cat message.txt)
-          curl -X POST "$FEISHU_WEBHOOK_URL" \
-            -H "Content-Type: application/json" \
-            -d "{\"msg_type\":\"text\",\"content\":{\"text\":\"$MESSAGE\"}}"
-
-      - name: Display message (manual run)
-        if: steps.fetch.outputs.has_games == 'true' && secrets.FEISHU_WEBHOOK_URL == ''
-        run: |
-          echo "========================================="
-          echo "FEISHU_WEBHOOK_URL not configured"
-          echo "Add it as a repository secret to enable notifications"
-          echo "========================================="
-          cat message.txt
+          if [ -n "$FEISHU_WEBHOOK_URL" ]; then
+            curl -X POST "$FEISHU_WEBHOOK_URL" \
+              -H "Content-Type: application/json" \
+              -d "{\"msg_type\":\"text\",\"content\":{\"text\":\"$MESSAGE\"}}"
+            echo "✅ Notification sent to Feishu"
+          else
+            echo "========================================="
+            echo "FEISHU_WEBHOOK_URL not configured"
+            echo "Add it as a repository secret to enable notifications"
+            echo "========================================="
+            cat message.txt
+          fi
 
       - name: No games found
         if: steps.fetch.outputs.has_games != 'true'
