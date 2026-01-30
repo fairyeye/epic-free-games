@@ -107,8 +107,12 @@ def main():
         elif is_upcoming_free(game):
             upcoming_free.append(format_upcoming_promotion(game))
 
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", DeprecationWarning)
+        timestamp = datetime.utcnow().isoformat() + "Z"
     result = {
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": timestamp,
         "current_free_games": current_free,
         "upcoming_free_games": upcoming_free
     }

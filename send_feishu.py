@@ -46,20 +46,18 @@ def format_message(games_data):
 
 def main():
     """主函数"""
-    # 从标准输入读取JSON数据
     input_data = sys.stdin.read()
     try:
         games_data = json.loads(input_data)
     except json.JSONDecodeError:
-        print("Error: Invalid JSON input", file=sys.stderr)
-        sys.exit(1)
+        message = "❌ **Epic Games 每周免费游戏通知**\n\n**错误**: 无法解析游戏数据"
+        print(message)
+        sys.exit(0)
 
     message = format_message(games_data)
     if not message:
-        print("No games to notify about", file=sys.stderr)
-        sys.exit(1)
+        message = "❌ **Epic Games 每周免费游戏通知**\n\n**本周暂无免费游戏信息**"
 
-    # 输出消息（在GitHub Actions中会被捕获并发送到飞书）
     print(message)
 
 if __name__ == "__main__":

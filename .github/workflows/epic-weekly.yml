@@ -24,17 +24,15 @@ jobs:
         id: fetch
         run: |
           python3 epic_games.py > games.json
-          echo "has_games=$(jq -e '.current_free_games | length > 0 or .upcoming_free_games | length > 0' games.json)" >> $GITHUB_OUTPUT
+          echo "has_games=$(jq '(.current_free_games | length > 0) or (.upcoming_free_games | length > 0)' games.json)" >> $GITHUB_OUTPUT
         continue-on-error: true
 
       - name: Format message for Feishu
-        if: steps.fetch.outputs.has_games == 'true'
         id: format
         run: |
           python3 send_feishu.py < games.json > message.txt
 
       - name: Send to Feishu
-        if: steps.fetch.outputs.has_games == 'true'
         env:
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
         run: |
