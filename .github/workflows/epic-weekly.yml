@@ -38,9 +38,9 @@ jobs:
         run: |
           MESSAGE=$(cat message.txt)
           if [ -n "$FEISHU_WEBHOOK_URL" ]; then
-            curl -X POST "$FEISHU_WEBHOOK_URL" \
+            jq -n --arg msg "$MESSAGE" '{"msg_type":"text","content":{"text":$msg}}' | curl -X POST "$FEISHU_WEBHOOK_URL" \
               -H "Content-Type: application/json" \
-              -d "{\"msg_type\":\"text\",\"content\":{\"text\":\"$MESSAGE\"}}"
+              -d @-
             echo "✅ Notification sent to Feishu"
           else
             echo "========================================="
