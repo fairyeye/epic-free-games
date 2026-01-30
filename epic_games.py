@@ -4,6 +4,7 @@ Epic Games 每周免费游戏通知脚本
 获取当前免费游戏和即将免费的游戏信息
 """
 import json
+import ssl
 import sys
 from datetime import datetime
 from urllib.request import urlopen
@@ -12,8 +13,11 @@ from urllib.error import URLError
 def fetch_free_games():
     """获取Epic Games免费游戏信息"""
     url = "https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions"
+    ctx = ssl.create_default_context()
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
     try:
-        with urlopen(url) as response:
+        with urlopen(url, context=ctx) as response:
             data = json.loads(response.read().decode('utf-8'))
             return data
     except URLError as e:
