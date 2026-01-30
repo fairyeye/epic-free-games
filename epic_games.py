@@ -7,8 +7,8 @@ import json
 import ssl
 import sys
 from datetime import datetime
-from urllib.request import urlopen
 from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 def fetch_free_games():
     """获取Epic Games免费游戏信息"""
@@ -17,10 +17,14 @@ def fetch_free_games():
     ctx.check_hostname = False
     ctx.verify_mode = ssl.CERT_NONE
     try:
-        with urlopen(url, context=ctx) as response:
+        req = Request(url, headers={
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Accept': 'application/json',
+        })
+        with urlopen(req, context=ctx, timeout=30) as response:
             data = json.loads(response.read().decode('utf-8'))
             return data
-    except URLError as e:
+    except Exception as e:
         print(f"Error fetching data: {e}", file=sys.stderr)
         return None
 
